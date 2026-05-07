@@ -79,3 +79,10 @@ CLAUDE.md
 .memory/
 .claude/
 graphify-out/
+
+# Android-only project — exclude iOS and Ruby tooling
+ios/
+.bundle/
+Gemfile
+Gemfile.lock
+android/gradle/wrapper/gradle-wrapper.jar
