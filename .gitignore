@@ -86,3 +86,5 @@ ios/
 Gemfile
 Gemfile.lock
 android/gradle/wrapper/gradle-wrapper.jar
+temp_auto_push.bat
+temp_interactive_push.bat

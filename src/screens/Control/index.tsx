@@ -12,9 +12,28 @@ import {RootStackParamList} from '../../navigation/types';
 import {useScheduleStore} from '../../store/scheduleStore';
 import {colors, spacing, fontSize, radius} from '../../constants/theme';
 import {FanSpeed} from '../../types/schedule';
-import {sendAcOn, sendAcOff, isIrSupported} from '../../services/ir/IrBlaster';
+import {sendAcOn, sendAcOff, isIrSupported, sendRawDebug} from '../../services/ir/IrBlaster';
+import {encodeRawGreeBytes} from '../../services/ir/greeEncoder';
 import {GREE_TEMP_MIN, GREE_TEMP_MAX} from '../../constants/ir';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
+// IRremoteESP8266 NormalRealExample — 139 pulses, YAW1F Cool ON 26°C Low fan
+// bytes: {0x19, 0x0A, 0x60, 0x50, 0x02, 0x23, 0x00, 0xF0}
+// Used to verify transmission layer independent of our encoder
+const GREE_RAW_TEST: number[] = [
+  9008, 4496, 644, 1660, 676, 530, 648, 558, 672, 1636, 646, 1660,
+  644, 556, 650, 584, 626, 560, 644, 580, 628, 1680, 624, 560,
+  648, 1662, 644, 582, 648, 536, 674, 530, 646, 580, 628, 560,
+  670, 532, 646, 562, 644, 556, 672, 536, 648, 1662, 646, 1660,
+  652, 554, 644, 558, 672, 538, 644, 560, 668, 560, 648, 1638,
+  668, 536, 644, 1660, 668, 532, 648, 560, 648, 1660, 674, 554,
+  622, 19990, 646, 580, 624, 1660, 648, 556, 648, 558, 674, 556,
+  622, 560, 644, 564, 668, 536, 646, 1662, 646, 1658, 672, 534,
+  648, 558, 644, 562, 648, 1662, 644, 584, 622, 558, 648, 562,
+  668, 534, 670, 536, 670, 532, 672, 536, 646, 560, 646, 558,
+  648, 558, 670, 534, 650, 558, 646, 560, 646, 560, 668, 1638,
+  646, 1662, 646, 1660, 646, 1660, 648,
+];
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -32,7 +51,7 @@ export default function ControlScreen({navigation}: Props) {
     }
     try {
       if (power) {
-        await sendAcOff();
+        await sendAcOff(temperature, fanSpeed);
         setAcState({power: false});
       } else {
         await sendAcOn(temperature, fanSpeed, 'cool');
@@ -131,6 +150,67 @@ export default function ControlScreen({navigation}: Props) {
         <Text style={styles.schedulesBtnText}>📅  View Schedules</Text>
       </TouchableOpacity>
 
+      {/* DEBUG A — raw replay (reference bytes + reference timings) */}
+      <TouchableOpacity
+        style={styles.debugBtn}
+        onPress={async () => {
+          if (!isIrSupported()) { Alert.alert('IR Not Supported', 'No IR blaster.'); return; }
+          try {
+            await sendRawDebug(GREE_RAW_TEST);
+            Alert.alert('[A] Sent', 'Ref bytes + ref timings');
+          } catch (e: unknown) { Alert.alert('[A] Error', String(e)); }
+        }}
+        activeOpacity={0.85}>
+        <Text style={styles.debugBtnText}>[A] Ref bytes + ref timings (known-good)</Text>
+      </TouchableOpacity>
+
+      {/* DEBUG B — reference bytes encoded with our timing constants — isolates timing vs bytes */}
+      <TouchableOpacity
+        style={styles.debugBtn}
+        onPress={async () => {
+          if (!isIrSupported()) { Alert.alert('IR Not Supported', 'No IR blaster.'); return; }
+          try {
+            const refBytes = [0x19, 0x0A, 0x60, 0x50, 0x02, 0x23, 0x00, 0xF0];
+            await sendRawDebug(encodeRawGreeBytes(refBytes));
+            Alert.alert('[B] Sent', 'Ref bytes + OUR timings');
+          } catch (e: unknown) { Alert.alert('[B] Error', String(e)); }
+        }}
+        activeOpacity={0.85}>
+        <Text style={styles.debugBtnText}>[B] Ref bytes + OUR timings (confirmed good)</Text>
+      </TouchableOpacity>
+
+      {/* DEBUG C — ref byte[0]+byte[1], our byte[4]+byte[5] — bisect upper half */}
+      <TouchableOpacity
+        style={styles.debugBtn}
+        onPress={async () => {
+          if (!isIrSupported()) { Alert.alert('IR Not Supported', 'No IR blaster.'); return; }
+          try {
+            // ref fan(low)+temp(26) | our swing(0)+display(0x21)
+            // bytes: {0x19, 0x0A, 0x60, 0x50, 0x00, 0x21, 0x00, 0xF0}
+            await sendRawDebug(encodeRawGreeBytes([0x19, 0x0A, 0x60, 0x50, 0x00, 0x21, 0x00, 0xF0]));
+            Alert.alert('[C] Sent', 'Ref b0+b1, our b4+b5');
+          } catch (e: unknown) { Alert.alert('[C] Error', String(e)); }
+        }}
+        activeOpacity={0.85}>
+        <Text style={styles.debugBtnText}>[C] Ref fan+temp, our swing+display</Text>
+      </TouchableOpacity>
+
+      {/* DEBUG D — our byte[0]+byte[1], ref byte[4]+byte[5] — bisect lower half */}
+      <TouchableOpacity
+        style={styles.debugBtn}
+        onPress={async () => {
+          if (!isIrSupported()) { Alert.alert('IR Not Supported', 'No IR blaster.'); return; }
+          try {
+            // our fan(medium)+temp(25) | ref swing(0x02)+display(0x23)
+            // bytes: {0x29, 0x09, 0x60, 0x50, 0x02, 0x23, 0x00, 0xE0}
+            await sendRawDebug(encodeRawGreeBytes([0x29, 0x09, 0x60, 0x50, 0x02, 0x23, 0x00, 0xE0]));
+            Alert.alert('[D] Sent', 'Our b0+b1, ref b4+b5');
+          } catch (e: unknown) { Alert.alert('[D] Error', String(e)); }
+        }}
+        activeOpacity={0.85}>
+        <Text style={styles.debugBtnText}>[D] Our fan+temp, ref swing+display</Text>
+      </TouchableOpacity>
+
     </ScrollView>
   );
 }
@@ -210,4 +290,15 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   schedulesBtnText: {fontSize: fontSize.md, fontWeight: '600', color: colors.textPrimary},
+  debugBtn: {
+    width: '100%',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: '#3a1a1a',
+    borderWidth: 1,
+    borderColor: '#cc4444',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  debugBtnText: {fontSize: fontSize.sm, fontWeight: '600', color: '#ff6666'},
 });

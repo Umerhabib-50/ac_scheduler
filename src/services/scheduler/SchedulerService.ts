@@ -86,6 +86,7 @@ export async function handleForegroundEvent(
     const slot = slots.find(s => s.id === data.slotId);
     if (slot) await sendAcOn(slot.temperature, slot.fanSpeed, slot.mode);
   } else if (data.action === 'ac-off') {
-    await sendAcOff();
+    const slot = slots.find(s => s.id === data.slotId);
+    await sendAcOff(slot?.temperature, slot?.fanSpeed);
   }
 }

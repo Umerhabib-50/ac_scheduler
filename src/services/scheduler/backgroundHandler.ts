@@ -1,4 +1,4 @@
-import notifee, {EventType} from '@notifee/react-native';
+import notifee, {EventType, Event} from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Slot} from '../../types/schedule';
 import {sendAcOn, sendAcOff} from '../ir/IrBlaster';
@@ -11,22 +11,25 @@ async function getSlot(slotId: string): Promise<Slot | undefined> {
   return slots.find(s => s.id === slotId);
 }
 
-export function registerBackgroundHandler(): void {
-  notifee.onBackgroundEvent(async ({type, detail}) => {
-    if (type !== EventType.DELIVERED && type !== EventType.PRESS) return;
+export async function handleNotifeeEvent({type, detail}: Event): Promise<void> {
+  if (type !== EventType.DELIVERED && type !== EventType.PRESS) return;
 
-    const data = detail.notification?.data as
-      | {action?: string; slotId?: string}
-      | undefined;
-    if (!data?.action) return;
+  const data = detail.notification?.data as
+    | {action?: string; slotId?: string}
+    | undefined;
+  if (!data?.action) return;
 
-    if (data.action === 'ac-on' && data.slotId) {
-      const slot = await getSlot(data.slotId);
-      if (slot?.enabled) {
-        await sendAcOn(slot.temperature, slot.fanSpeed, slot.mode);
-      }
-    } else if (data.action === 'ac-off') {
-      await sendAcOff();
+  if (data.action === 'ac-on' && data.slotId) {
+    const slot = await getSlot(data.slotId);
+    if (slot?.enabled) {
+      await sendAcOn(slot.temperature, slot.fanSpeed, slot.mode);
     }
-  });
+  } else if (data.action === 'ac-off' && data.slotId) {
+    const slot = await getSlot(data.slotId);
+    await sendAcOff(slot?.temperature, slot?.fanSpeed);
+  }
+}
+
+export function registerBackgroundHandler(): void {
+  notifee.onBackgroundEvent(handleNotifeeEvent);
 }
