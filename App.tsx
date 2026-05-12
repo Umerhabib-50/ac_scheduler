@@ -9,6 +9,8 @@ import {handleNotifeeEvent} from './src/services/scheduler/backgroundHandler';
 
 export default function App() {
   useEffect(() => {
+    console.log("umer");
+    
     return notifee.onForegroundEvent(handleNotifeeEvent);
   }, []);
 
