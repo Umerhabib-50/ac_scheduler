@@ -1736,12 +1736,21 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
-"@react-navigation/core@^7.17.2":
-  version "7.17.2"
-  resolved "https://registry.npmjs.org/@react-navigation/core/-/core-7.17.2.tgz"
-  integrity sha512-Rt2OZwcgOmjv401uLGAKaRM6xo0fiBce/A7LfRHI1oe5FV+KooWcgAoZ2XOtgKj6UzVMuQWt3b2e6rxo/mDJRA==
+"@react-navigation/bottom-tabs@^7.16.0":
+  version "7.16.0"
+  resolved "https://registry.npmjs.org/@react-navigation/bottom-tabs/-/bottom-tabs-7.16.0.tgz"
+  integrity sha512-ShHaAR2mQxsSzL2kDRWfquomRsFfG+bm+UBRgu8D9ScbNBnnetzwOBestz/1DugVj89WtNapWJuHbMdgyCZEyQ==
   dependencies:
-    "@react-navigation/routers" "^7.5.3"
+    "@react-navigation/elements" "^2.9.17"
+    color "^4.2.3"
+    sf-symbols-typescript "^2.1.0"
+
+"@react-navigation/core@^7.17.4":
+  version "7.17.4"
+  resolved "https://registry.npmjs.org/@react-navigation/core/-/core-7.17.4.tgz"
+  integrity sha512-Rv9E2oNNQEkPGpmu9q+vJwGJRSQR6LBg5L+Yo1QHjtwGbHUbjkIKOdYymDZoZYgNzX2OD4rAIlfuzbDKa3cCeA==
+  dependencies:
+    "@react-navigation/routers" "^7.5.5"
     escape-string-regexp "^4.0.0"
     fast-deep-equal "^3.1.3"
     nanoid "^3.3.11"
@@ -1750,10 +1759,10 @@
     use-latest-callback "^0.2.4"
     use-sync-external-store "^1.5.0"
 
-"@react-navigation/elements@^2.9.15":
-  version "2.9.15"
-  resolved "https://registry.npmjs.org/@react-navigation/elements/-/elements-2.9.15.tgz"
-  integrity sha512-cyz/pPiyyC6gaTVLsGFc1g0MYgrmuCFqklAWGXMWPscr5YU3ui94vPI4vnZwcsEy0T758TQWLzmS5XudZeRKcA==
+"@react-navigation/elements@^2.9.15", "@react-navigation/elements@^2.9.17":
+  version "2.9.17"
+  resolved "https://registry.npmjs.org/@react-navigation/elements/-/elements-2.9.17.tgz"
+  integrity sha512-Prax9RDS6l32npcl4PzvL88VoXe9HdtcIUP2+rim3DLVSZceD6oreA+cmPBUjeLFjsnxKlU3pTRby3RpYJ5/xw==
   dependencies:
     color "^4.2.3"
     use-latest-callback "^0.2.4"
@@ -1769,21 +1778,21 @@
     sf-symbols-typescript "^2.1.0"
     warn-once "^0.1.1"
 
-"@react-navigation/native@^7.2.2":
-  version "7.2.2"
-  resolved "https://registry.npmjs.org/@react-navigation/native/-/native-7.2.2.tgz"
-  integrity sha512-kem1Ko2BcbAjmbQIv66dNmr6EtfDut3QU0qjsVhMnLLhktwyXb6FzZYp8gTrUb6AvkAbaJoi+BF5Pl55pAUa5w==
+"@react-navigation/native@^7.2.2", "@react-navigation/native@^7.2.4":
+  version "7.2.4"
+  resolved "https://registry.npmjs.org/@react-navigation/native/-/native-7.2.4.tgz"
+  integrity sha512-eWC2D3JjhYLId2fVTZhhCiUpWIaPhO9XyEb7Wq8ElmOHyIODlbOzgZ0rKia02OIsDKr9BzZl2sK1dL70yMxDaw==
   dependencies:
-    "@react-navigation/core" "^7.17.2"
+    "@react-navigation/core" "^7.17.4"
     escape-string-regexp "^4.0.0"
     fast-deep-equal "^3.1.3"
     nanoid "^3.3.11"
     use-latest-callback "^0.2.4"
 
-"@react-navigation/routers@^7.5.3":
-  version "7.5.3"
-  resolved "https://registry.npmjs.org/@react-navigation/routers/-/routers-7.5.3.tgz"
-  integrity sha512-1tJHg4KKRJuQ1/EvJxatrMef3NZXEPzwUIUZ3n1yJ2t7Q97siwRtbynRpQG9/69ebbtiZ8W3ScOZF/OmhvM4Rg==
+"@react-navigation/routers@^7.5.5":
+  version "7.5.5"
+  resolved "https://registry.npmjs.org/@react-navigation/routers/-/routers-7.5.5.tgz"
+  integrity sha512-9/hhMte12Kgu+pMnLfA4EWJ0OQmIEAMVMX06FPH2yGkEQSQ3JhhCN/GkcRikzQhtEi97VYYQA15umptBUShcOQ==
   dependencies:
     nanoid "^3.3.11"
 

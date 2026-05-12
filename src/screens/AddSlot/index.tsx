@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../navigation/types';
+import {SchedulesStackParamList} from '../../navigation/types';
 import {useScheduleStore} from '../../store/scheduleStore';
 import Button from '../../components/common/Button';
 import {colors, spacing, fontSize, radius} from '../../constants/theme';
@@ -19,9 +19,12 @@ import {FanSpeed} from '../../types/schedule';
 import {scheduleSlot, cancelSlot, hasOnTimeConflict} from '../../services/scheduler/SchedulerService';
 import {GREE_TEMP_MIN, GREE_TEMP_MAX} from '../../constants/ir';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AddSlot'>;
+type Props = NativeStackScreenProps<SchedulesStackParamList, 'AddSlot'>;
 
-const FAN_OPTIONS: FanSpeed[] = ['auto', 'low', 'medium', 'high'];
+const FAN_OPTIONS: FanSpeed[] = ['auto', 'low', 'medLow', 'medium', 'medHigh', 'high'];
+const FAN_LABELS: Record<FanSpeed, string> = {
+  auto: 'Auto', low: '1', medLow: '2', medium: '3', medHigh: '4', high: '5',
+};
 
 function timeStringToDate(t: string): Date {
   const [h, m] = t.split(':').map(Number);
@@ -212,7 +215,7 @@ export default function AddSlotScreen({navigation, route}: Props) {
             style={[styles.fanBtn, fanSpeed === f && styles.fanBtnActive]}
             onPress={() => setFanSpeed(f)}>
             <Text style={[styles.fanBtnText, fanSpeed === f && styles.fanBtnTextActive]}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {FAN_LABELS[f]}
             </Text>
           </TouchableOpacity>
         ))}

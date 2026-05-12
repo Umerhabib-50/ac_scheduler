@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {RootStackParamList} from '../../navigation/types';
+import {SchedulesStackParamList} from '../../navigation/types';
 import {useScheduleStore} from '../../store/scheduleStore';
 import SlotCard from '../../components/slots/SlotCard';
 import {colors, spacing, fontSize} from '../../constants/theme';
@@ -16,7 +16,7 @@ import {scheduleSlot, cancelSlot, hasOnTimeConflict} from '../../services/schedu
 import {requestNotificationPermission, requestExactAlarmPermission} from '../../utils/permissions';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Schedules'>;
+type Props = NativeStackScreenProps<SchedulesStackParamList, 'Schedules'>;
 
 export default function SchedulesScreen({navigation}: Props) {
   const {slots, toggleSlot, removeSlot} = useScheduleStore();

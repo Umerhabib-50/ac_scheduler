@@ -25,7 +25,7 @@ export async function handleNotifeeEvent({type, detail}: Event): Promise<void> {
   if (data.action === 'ac-on' && data.slotId) {
     const slot = await getSlot(data.slotId);
     if (slot?.enabled) {
-      await sendAcOn(slot.temperature, slot.fanSpeed, slot.mode);
+      await sendAcOn({temp: slot.temperature, fanSpeed: slot.fanSpeed, mode: slot.mode});
       setAcState({power: true, temperature: slot.temperature, fanSpeed: slot.fanSpeed, mode: slot.mode});
     }
   } else if (data.action === 'ac-off' && data.slotId) {
