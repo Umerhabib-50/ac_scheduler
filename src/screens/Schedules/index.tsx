@@ -13,7 +13,7 @@ import {useScheduleStore} from '../../store/scheduleStore';
 import SlotCard from '../../components/slots/SlotCard';
 import {colors, spacing, fontSize} from '../../constants/theme';
 import {scheduleSlot, cancelSlot, hasOnTimeConflict} from '../../services/scheduler/SchedulerService';
-import {requestNotificationPermission, requestExactAlarmPermission} from '../../utils/permissions';
+import {requestNotificationPermission, requestExactAlarmPermission, requestBatteryOptimizationExemption} from '../../utils/permissions';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<SchedulesStackParamList, 'Schedules'>;
@@ -25,6 +25,7 @@ export default function SchedulesScreen({navigation}: Props) {
   useEffect(() => {
     requestNotificationPermission();
     requestExactAlarmPermission();
+    requestBatteryOptimizationExemption();
   }, []);
 
   const handleToggle = async (id: string) => {
