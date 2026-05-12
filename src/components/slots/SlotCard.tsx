@@ -20,9 +20,14 @@ export default function SlotCard({slot, onToggle, onEdit, onDelete}: Props) {
       <View style={styles.row}>
         <View style={styles.times}>
           <Text style={styles.label}>{slot.label}</Text>
-          <Text style={styles.time}>
-            {formatTime(slot.onTime)} → {formatTime(slot.offTime)}
-          </Text>
+          <View style={styles.timeRow}>
+            <Text style={styles.time}>
+              {formatTime(slot.onTime)} → {formatTime(slot.offTime)}
+            </Text>
+            {slot.overnightOff && (
+              <Text style={styles.nextDayBadge}>next day</Text>
+            )}
+          </View>
           <Text style={styles.meta}>
             {slot.temperature}°C · Fan: {slot.fanSpeed}
           </Text>
@@ -61,8 +66,19 @@ const styles = StyleSheet.create({
   cardDisabled: {opacity: 0.5},
   row: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   times: {flex: 1},
+  timeRow: {flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: 2},
   label: {fontSize: fontSize.md, fontWeight: '700', color: colors.textPrimary, marginBottom: 2},
-  time: {fontSize: fontSize.lg, fontWeight: '600', color: colors.primary, marginBottom: 2},
+  time: {fontSize: fontSize.lg, fontWeight: '600', color: colors.primary},
+  nextDayBadge: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.primary,
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
   meta: {fontSize: fontSize.sm, color: colors.textSecondary},
   right: {alignItems: 'center'},
   deleteBtn: {

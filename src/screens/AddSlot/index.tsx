@@ -2,12 +2,14 @@ import React, {useState} from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
+  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
+import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../navigation/types';
 import {useScheduleStore} from '../../store/scheduleStore';
@@ -20,6 +22,42 @@ import {GREE_TEMP_MIN, GREE_TEMP_MAX} from '../../constants/ir';
 type Props = NativeStackScreenProps<RootStackParamList, 'AddSlot'>;
 
 const FAN_OPTIONS: FanSpeed[] = ['auto', 'low', 'medium', 'high'];
+
+function timeStringToDate(t: string): Date {
+  const [h, m] = t.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function dateToTimeString(d: Date): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function toMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function slotRanges(onTime: string, offTime: string): Array<[number, number]> {
+  const on = toMinutes(onTime);
+  const off = toMinutes(offTime);
+  if (off <= on) return [[on, 1440], [0, off]];
+  return [[on, off]];
+}
+
+function rangesOverlap(a: [number, number], b: [number, number]): boolean {
+  return a[0] < b[1] && a[1] > b[0];
+}
+
+function slotsOverlap(
+  a: {onTime: string; offTime: string},
+  b: {onTime: string; offTime: string},
+): boolean {
+  const aR = slotRanges(a.onTime, a.offTime);
+  const bR = slotRanges(b.onTime, b.offTime);
+  return aR.some(ar => bR.some(br => rangesOverlap(ar, br)));
+}
 
 export default function AddSlotScreen({navigation, route}: Props) {
   const editSlot = route.params?.editSlot;
@@ -36,38 +74,42 @@ export default function AddSlotScreen({navigation, route}: Props) {
   const [offTime, setOffTime] = useState(editSlot?.offTime ?? '06:00');
   const [temperature, setTemperature] = useState(editSlot?.temperature ?? 24);
   const [fanSpeed, setFanSpeed] = useState<FanSpeed>(editSlot?.fanSpeed ?? 'auto');
+  const [showOnPicker, setShowOnPicker] = useState(false);
+  const [showOffPicker, setShowOffPicker] = useState(false);
+
+  const isOvernight = toMinutes(offTime) < toMinutes(onTime);
+
+  const handleOnChange = (_: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowOnPicker(false);
+    if (date) setOnTime(dateToTimeString(date));
+  };
+
+  const handleOffChange = (_: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowOffPicker(false);
+    if (date) setOffTime(dateToTimeString(date));
+  };
 
   const handleSave = async () => {
-    if (!validateTime(onTime) || !validateTime(offTime)) {
-      Alert.alert('Invalid time', 'Use HH:MM format (e.g. 22:00)');
-      return;
-    }
-
     if (onTime === offTime) {
       Alert.alert('Invalid slot', 'ON time and OFF time cannot be the same.');
       return;
     }
 
-    if (toMinutes(onTime) > toMinutes(offTime)) {
-      Alert.alert('Invalid slot', 'ON time must be before OFF time.');
-      return;
-    }
-
     const otherSlots = slots.filter(s => s.id !== editSlot?.id);
+    const current = {onTime, offTime};
+
     const duplicateOn = otherSlots.find(s => s.onTime === onTime);
-    const duplicateOff = otherSlots.find(s => s.offTime === offTime);
     if (duplicateOn) {
       Alert.alert('Duplicate time', `Another slot already starts at ${onTime}.`);
       return;
     }
+    const duplicateOff = otherSlots.find(s => s.offTime === offTime);
     if (duplicateOff) {
       Alert.alert('Duplicate time', `Another slot already ends at ${offTime}.`);
       return;
     }
 
-    const overlapping = otherSlots.find(
-      s => toMinutes(onTime) < toMinutes(s.offTime) && toMinutes(offTime) > toMinutes(s.onTime),
-    );
+    const overlapping = otherSlots.find(s => slotsOverlap(current, s));
     if (overlapping) {
       Alert.alert('Overlap', `This slot overlaps with "${overlapping.label || overlapping.onTime + '–' + overlapping.offTime}".`);
       return;
@@ -77,6 +119,7 @@ export default function AddSlotScreen({navigation, route}: Props) {
       label: label.trim() || `Slot ${onTime}–${offTime}`,
       onTime,
       offTime,
+      overnightOff: isOvernight,
       temperature,
       fanSpeed,
       mode: 'cool' as const,
@@ -114,28 +157,35 @@ export default function AddSlotScreen({navigation, route}: Props) {
       />
 
       {/* ON Time */}
-      <Text style={styles.fieldLabel}>ON Time (HH:MM)</Text>
-      <TextInput
-        style={styles.input}
-        value={onTime}
-        onChangeText={setOnTime}
-        placeholder="22:00"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="numbers-and-punctuation"
-        maxLength={5}
-      />
+      <Text style={styles.fieldLabel}>ON Time</Text>
+      <TouchableOpacity style={styles.timeButton} onPress={() => setShowOnPicker(true)}>
+        <Text style={styles.timeButtonText}>{onTime}</Text>
+      </TouchableOpacity>
+      {showOnPicker && (
+        <DateTimePicker
+          value={timeStringToDate(onTime)}
+          mode="time"
+          is24Hour
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleOnChange}
+        />
+      )}
 
       {/* OFF Time */}
-      <Text style={styles.fieldLabel}>OFF Time (HH:MM)</Text>
-      <TextInput
-        style={styles.input}
-        value={offTime}
-        onChangeText={setOffTime}
-        placeholder="06:00"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="numbers-and-punctuation"
-        maxLength={5}
-      />
+      <Text style={styles.fieldLabel}>OFF Time</Text>
+      <TouchableOpacity style={styles.timeButton} onPress={() => setShowOffPicker(true)}>
+        <Text style={styles.timeButtonText}>{offTime}</Text>
+        {isOvernight && <Text style={styles.nextDayBadge}>next day</Text>}
+      </TouchableOpacity>
+      {showOffPicker && (
+        <DateTimePicker
+          value={timeStringToDate(offTime)}
+          mode="time"
+          is24Hour
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleOffChange}
+        />
+      )}
 
       {/* Temperature */}
       <Text style={styles.fieldLabel}>Temperature: {temperature}°C</Text>
@@ -161,8 +211,7 @@ export default function AddSlotScreen({navigation, route}: Props) {
             key={f}
             style={[styles.fanBtn, fanSpeed === f && styles.fanBtnActive]}
             onPress={() => setFanSpeed(f)}>
-            <Text
-              style={[styles.fanBtnText, fanSpeed === f && styles.fanBtnTextActive]}>
+            <Text style={[styles.fanBtnText, fanSpeed === f && styles.fanBtnTextActive]}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </Text>
           </TouchableOpacity>
@@ -172,15 +221,6 @@ export default function AddSlotScreen({navigation, route}: Props) {
       <Button label={editSlot ? 'Save Changes' : 'Add Slot'} onPress={handleSave} style={styles.saveBtn} />
     </ScrollView>
   );
-}
-
-function validateTime(t: string): boolean {
-  return /^([01]\d|2[0-3]):([0-5]\d)$/.test(t);
-}
-
-function toMinutes(t: string): number {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
 }
 
 const styles = StyleSheet.create({
@@ -204,6 +244,28 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 2,
     fontSize: fontSize.md,
     color: colors.textPrimary,
+  },
+  timeButton: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timeButtonText: {fontSize: fontSize.lg, fontWeight: '600', color: colors.textPrimary},
+  nextDayBadge: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.primary,
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
   },
   tempRow: {
     flexDirection: 'row',
